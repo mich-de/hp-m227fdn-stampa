@@ -1,41 +1,40 @@
-# Stampa HP LaserJet MFP M227fdn — appunti e script
+# HP LaserJet MFP M227fdn printing — notes and scripts
 
-Raccolta di script e note per far stampare correttamente una **HP LaserJet MFP M227fdn**
-da Windows 11 **ARM64** (Snapdragon) e da Android, con PDF A4, monocromatici e senza margine
-superiore tagliato.
+Scripts and notes to get an **HP LaserJet MFP M227fdn** printing correctly from Windows 11
+**ARM64** (Snapdragon) and from Android: A4, monochrome, single-sided, with no clipped top margin.
 
-## Contenuto
+## Contents
 
-| File | Cosa fa |
+| File | What it does |
 |---|---|
-| `stampa.ps1` | stampa un PDF senza driver: pre-scala il contenuto e lo invia in IPP alla stampante |
-| `pdf_fit.py` | motore di scaling (pypdf): riduce il PDF e lo centra con margine configurabile |
-| `setup_pcl6_queue.ps1` | crea porta TCP/IP 9100 + coda con `Microsoft PCL6 Class Driver`, default A4 (richiede admin) |
-| `restart_spooler.ps1` | riavvia il servizio Spooler (richiede admin) |
-| `setup_ipp_queue.ps1`, `setup_ipp_port_v2.ps1` | tentativi di coda IPP su Windows senza Internet Port Monitor (non funzionanti: documentazione) |
-| `install_hp_driver.ps1`, `install_hp_driver2.ps1` | tentativi di installazione driver HP x64 su ARM64 (non applicabili) |
-| `setup_pcl_queue.ps1` | creazione coda cercando un driver HP PCL (fallisce senza driver ARM64) |
-| `cleanup_queues.ps1`, `cleanup_queues2.ps1` | pulizia code/porte/driver di prova |
-| `memory.md` | fatti stabili: rete, stampante, vincoli, convenzioni |
-| `handover.md` | stato attuale, problemi aperti, prossimi passi |
+| `stampa.ps1` | print a PDF without a driver: pre-scales the content, then sends it over IPP |
+| `pdf_fit.py` | scaling engine (pypdf): shrinks the PDF and centres it with a configurable margin |
+| `setup_pcl6_queue.ps1` | creates a TCP/IP 9100 port + a queue with `Microsoft PCL6 Class Driver`, A4 default (needs admin) |
+| `restart_spooler.ps1` | restarts the Spooler service (needs admin) |
+| `setup_ipp_queue.ps1`, `setup_ipp_port_v2.ps1` | attempts at an IPP queue on Windows without the Internet Port Monitor (do not work: kept as documentation) |
+| `install_hp_driver.ps1`, `install_hp_driver2.ps1` | attempts at installing the HP x64 driver on ARM64 (not applicable) |
+| `setup_pcl_queue.ps1` | queue creation looking for an HP PCL driver (fails with no ARM64 driver) |
+| `cleanup_queues.ps1`, `cleanup_queues2.ps1` | cleanup of test queues, ports and drivers |
+| `memory.md` | stable facts: network, printer, constraints, conventions |
+| `handover.md` | current state, open issues, next steps |
 
-## Uso rapido
+## Quick use
 
 ```powershell
-cd .\hp
-.\stampa.ps1 -Pdf "C:\percorso\documento.pdf"                 # A4, mono, fronte singolo, margine 10 mm
-.\stampa.ps1 -Pdf "C:\percorso\documento.pdf" -MarginMm 6     # margine più stretto, testo più grande
-.\stampa.ps1 -Pdf "C:\percorso\documento.pdf" -Sides two-sided-long-edge
+.\stampa.ps1 -Pdf "C:\path\document.pdf"                 # A4, mono, single-sided, 10 mm margin
+.\stampa.ps1 -Pdf "C:\path\document.pdf" -MarginMm 6     # tighter margin, bigger text
+.\stampa.ps1 -Pdf "C:\path\document.pdf" -Sides two-sided-long-edge
 ```
 
-Richiede `python` con `pypdf` installato e la stampante raggiungibile su `192.168.188.88` (modificabile
-con `-Printer`).
+Requires `python` with `pypdf` installed and the printer reachable on `192.168.188.88`
+(change it with `-Printer`).
 
-## Le tre cose che contano
+## The three things that matter
 
-1. **Margine non stampabile 4,23 mm**: la M227 non stampa vicino al bordo e il firmware 2019 **ignora**
-   l'attributo IPP `print-scaling`. La scala va applicata dentro il PDF prima dell'invio.
-2. **Windows su ARM64 non installa driver di stampa x64** (nessuna emulazione). Servono driver nativi
-   ARM64: vanno bene quelli inbox `Microsoft PCL6/PS Class Driver` sulla porta TCP/IP 9100.
-3. **PdfCraft (ArtCraft) non stampa con `Microsoft IPP Class Driver` su porta WSD**: fallisce con
-   `Failed to correct dev mode via DocumentProperties`. Con un driver PCL6 la stampa funziona.
+1. **4.23 mm non-printable margin**: the M227 cannot print near the sheet edge and the 2019
+   firmware **ignores** the IPP `print-scaling` attribute. The scale must be applied inside the
+   PDF before sending.
+2. **Windows on ARM64 cannot install x64 print drivers** (no emulation). Native ARM64 drivers are
+   required: the inbox `Microsoft PCL6/PS Class Driver` over a raw TCP/IP 9100 port works.
+3. **PdfCraft (ArtCraft) does not print with `Microsoft IPP Class Driver` on a WSD port**: it fails
+   with `Failed to correct dev mode via DocumentProperties`. With a PCL6 driver printing works.

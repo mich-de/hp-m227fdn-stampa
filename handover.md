@@ -1,32 +1,36 @@
-# handover.md — stato attuale
+# handover.md — current state
 
-## Obiettivo
-Stampare da telefono Android e da PC (PdfCraft incluso) sulla HP LaserJet MFP M227fdn,
-A4, monocromatica, senza margine superiore tagliato.
+## Goal
+Print from an Android phone and from the PC (PdfCraft included) to the HP LaserJet MFP M227fdn:
+A4, monochrome, no clipped top margin.
 
-## Fatto
-- Telefono: HP Print Service Plugin disabilitato (perdeva la cache device), si usa **Mopria**; Drive non
-  materializza i documenti, quindi PDF locale. Test superato.
-- PC: **coda nuova `HP M227fdn (PCL)`** (Microsoft PCL6 Class Driver, porta TCP/IP 9100), A4, mono, **predefinita**.
-  Vecchia coda WSD rimossa.
-- **PdfCraft ora stampa**: verificato da CLI (`pdfcraft-cli run`), 2 job inviati, contatore pagine +2.
-  Causa del blocco: `Microsoft IPP Class Driver` su porta WSD → errore `Failed to correct dev mode via DocumentProperties`.
-- Margine tagliato risolto due volte:
-  - via PdfCraft: opzione "adatta alla pagina" (scala del driver PCL6);
-  - via `stampa.ps1` (IPP diretto): PDF pre-scalato 90,5% + margine 10 mm, invio `print-scaling=none`.
-- Default coda corretto da Letter a A4 (era la causa degli eventi "Formato carta errato" sul pannello).
+## Done
+- Phone: HP Print Service Plugin disabled (it kept losing the device cache); **Mopria** is used instead.
+  Google Drive never materialises the document, so print a locally saved PDF. Verified.
+- PC: **new queue `HP M227fdn (PCL)`** (Microsoft PCL6 Class Driver, TCP/IP 9100 port), A4, mono,
+  **set as default**. Old WSD queue removed.
+- **PdfCraft prints now**: verified from the CLI (`pdfcraft-cli run`), 2 jobs sent, page counter +2.
+  Root cause of the failure: `Microsoft IPP Class Driver` on a WSD port →
+  `Failed to correct dev mode via DocumentProperties`.
+- Clipped margin fixed two ways:
+  - through PdfCraft: "fit to page" (scaling by the PCL6 driver);
+  - through `stampa.ps1` (direct IPP): PDF pre-scaled to 90.5% with a 10 mm margin, sent with
+    `print-scaling=none`.
+- Queue default paper fixed from Letter to A4 (it was the cause of the "Wrong paper size" events on the
+  printer control panel).
 
-## Da sapere / problemi aperti
-- Windows è **ARM64**: i driver HP x64 non si installano (nessuna emulazione per i driver di stampa).
-  Se in futuro serve un driver HP vero, deve essere un pacchetto **ARM64**.
-- Manca `inetmon`/`inetpp` (Internet Port Monitor): niente porte IPP `http://` native. Non è stato riparato
-  (richiederebbe ripristino dei componenti di stampa Windows).
-- Porta residua non rimovibile: `http://192.168.188.88/ipp/print` ("in uso"), inutilizzata. Innocua.
-- Il driver HP x64 scaricato dal catalog WU (`oem79.inf`) è stato installato e poi **rimosso** con pnputil.
-- IP in DHCP (lease ~10 giorni): se la stampante non risponde, verificare ancora `192.168.188.88`.
+## Notes / open issues
+- Windows is **ARM64**: HP x64 drivers cannot be installed (no print driver emulation). Any future HP
+  driver must be an **ARM64** package.
+- `inetmon`/`inetpp` (Internet Port Monitor) is missing: no native `http://` IPP ports. Not repaired
+  (it would require restoring the Windows printing components).
+- Leftover port that cannot be removed: `http://192.168.188.88/ipp/print` ("in use"), unused. Harmless.
+- The HP x64 driver downloaded from the Windows Update catalog (`oem79.inf`) was installed and then
+  **removed** with pnputil.
+- The printer is on DHCP (~10 day lease): if it stops answering, check it is still `192.168.188.88`.
 
-## Prossimi passi possibili
-1. Riserva DHCP nel FRITZ!Box per la MAC della stampante (la trovi su `/DevMgmt/ProductConfigDyn.xml`).
-2. Se serve stampa affidata al telefono in modo affidabile: Mopria + PDF locale.
-3. Se PdfCraft dovesse tornare a non stampare dopo un aggiornamento di Windows: ricreare la coda con
-   `setup_pcl6_queue.ps1` (verifica che il driver resti `Microsoft PCL6 Class Driver`).
+## Possible next steps
+1. DHCP reservation in the FRITZ!Box for the printer MAC (see `/DevMgmt/ProductConfigDyn.xml`).
+2. If phone printing must be rock solid: Mopria + a locally saved PDF.
+3. If PdfCraft stops printing after a Windows update: recreate the queue with `setup_pcl6_queue.ps1`
+   (check the driver stays `Microsoft PCL6 Class Driver`).
